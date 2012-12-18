@@ -1,7 +1,7 @@
 {
   "name": "sol-redis-pool",
   "description": "Generic resource pooling for Node.JS",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "author": "Joshua Heiks <joshuaheiks@gmail.com>",
   "keywords": ["pool", "redis"],
   "main": "index.js",
