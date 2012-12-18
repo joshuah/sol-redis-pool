@@ -1,7 +1,13 @@
 sol-redis-pool
 ==============
 
-A simple Redis pool for node using generic-pool. There are two example included. 
+A simple Redis pool for node using generic-pool. There are two example included.
+
+### Install
+
+    npm install sol-redis-pool
+    
+### Example
 
     // Configure our pool settings.
     settings = {
@@ -9,7 +15,7 @@ A simple Redis pool for node using generic-pool. There are two example included.
       redis_host: '127.0.0.1',
     }
     
-    var Pool = require('./sol-redis-pool');
+    var Pool = require('sol-redis-pool');
     
     // Handle the error here...
     function errorCallback(err) {}
