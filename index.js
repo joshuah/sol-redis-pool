@@ -15,7 +15,7 @@ var RedisPool = Pool({
 });
 
 // You can use this function to drain the pool.
-RedisPool.prototype.Drain = function(pool, callback) {
+RedisPool.Drain = function(pool, callback) {
   pool.drain(function() {
     pool.destroyAllNow();
     callback();

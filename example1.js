@@ -10,7 +10,7 @@ settings = {
   redis_min: 0
 }
 	
-var Pool = require('./index'); //sol-redis-pool
+var Pool = require('sol-redis-pool'); //sol-redis-pool
 	
 function Example(err, client) {
 	// Use redis client like you normally would.

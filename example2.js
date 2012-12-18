@@ -10,7 +10,7 @@ settings = {
   redis_min: 0
 }
 	
-var Pool = require('./index');
+var Pool = require('sol-redis-pool');
 	
 function errorCallback(err) {
 	console.log('Error: ', err);
