@@ -1,7 +1,7 @@
 sol-redis-pool
 ==============
 
-A simple Redis pool for node using generic-pool. There are two example included.
+A simple Redis pool for node using generic-pool. There are two example included. See example1.js for a demo.
 
 ### Install
 
@@ -9,31 +9,50 @@ A simple Redis pool for node using generic-pool. There are two example included.
     
 ### Example
 
-    // Configure our pool settings.
-    settings = {
-	  redis_port: 6379,
+    // Example 1: Using the acquireHelper.
+    // Our Settings
+    options = {
       redis_host: '127.0.0.1',
+      redis_port: 6379,
     }
-    
-    var Pool = require('sol-redis-pool');
+        
+    var RedisPool = require('./index');
+    var pool = new RedisPool(options);
     
     // Handle the error here...
     function errorCallback(err) {}
-
-    function successCallback(client) {
+    
+    function clientCallback(client) {
       // Use the client then release it back to the pool.
       client.ping(function(err, result) {
-	    console.log(err, result);
-	    Pool.release(client);
+    	console.log(err, result);
+    	// Release the client...
+	    pool.release(client);
+		// Drain the pool so the example will end.
+		pool.drain(function(){
+			console.log('Done...');
+		});
       })
     }
-    Pool.AcquireHelper(errorCallback, successCallback);
+    console.log("If everything is working, you should see 'null 'PONG'.")
+    pool.acquireHelper(errorCallback, clientCallback);
+
+The output should be:
+
+    If everything is working you should see 'null 'PONG'.
+    null 'PONG'
 
 ## Methods
 
-### AcquireHelper(errorCallback, successCallback)
+### acquire(callback)
+Acquires a redis client from the pool. The callback is passed an **err** and **client**. The **client** object is a normal redis client. Make sure you release the **client** using the .release(client) method when you are done.
+
+### release(client)
+This method will release your client object back into the pool.
+
+### acquireHelper(errorCallback, clientCallback)
 This method accepts two callbacks. The error callback is called if the pool
-cannot return a client. `errorCallback(err)`. The successCallback(client) returns the redis client connection.
+cannot return a client. `errorCallback(err)`. The clientCallback(client) returns the redis client connection. Note: You still need to **release** the client object.
 
 ### Drain(Pool, callback)
 This method will drain the connection pool completely and execute the callback when finished. You should call this when you want to close your application. If you do not your application will continue to run forever.
@@ -43,55 +62,63 @@ The Pool argument should be your *Pool* object.
 ## Adjusting Pool Settings.
 Combine any the settings you may need into one global named settings.
 
-    // Create a global named settings.
-    settings = {
-      redis_max: 10,
-      redis_min: 5
+    options = {
+      redis_host: '127.0.0.1',
+      redis_port: 6379,
+      redis_options: {},
+      redis_password: 'dingbats'
+      max_clients: 10,
+      min_clients: 2,
+      reapIntervalMillis: 5000,
+      idleTimeoutMillis: 30000,
+      logging: true
     }
-    
+
+## Redis Options
+ 
 ### Redis Server and Port
 
-    settings = {
+    options = {
       redis_port: 6379,
       redis_host: '127.0.0.1'
     }
 
 The default settings are port `6379` and `127.0.0.1`.
 
-### Max Redis Clients
-Sets maximum number of resources to create at any given time.
+### Additional Redis Options
+You can pass any *options* you normally would pass to the **redis.createClient()** function in `node-redis`. See the [node-redis documentation](https://github.com/mranney/node_redis#rediscreateclientport-host-options) for more information.
 
-    settings = {
-       redis_max: 10
-    }
-    
-The default value is 10.
-
-### Min Redis Clients
-Sets minimum number of resources to keep in pool at any given time.
-
-    settings = {
-       redis_min: 5
+    options = {
+       redis_options: redisoptions…
     }
 
+You can also provide the redis server password by setting *redis_password*. **NOTE: This still needs testing…**
 
-The default value is 2.
+## Generic Pool Options
+These options are used to control the **generic-pool**. You will normally not need to use any of these options.
 
-## Advanced Settings.
+### Number of Clients
+Optional minimum and maximum clients to have ready in the pool. The default values are 10 for the maximum and 2 for the minimum.
+
+    options = {
+       max_clients: 10,
+       min_clients: 5
+    }
+
 
 ### Generic Pool - Timeouts
-You can adjust the *reapIntervalMillis* by setting *redis_reap_timeout*. The *idleTimeoutMillis* can be set by setting *redis_timeout*.
+You can adjust the **generic-pool** *reapIntervalMillis* and *idleTimeoutMillis*.
 
-    settings = {
-       redis_reap_timeout: 5000,
-       redis_timeout: 30000
+    options = {
+       reapIntervalMillis: 5000,
+       idleTimeoutMillis: 30000
     }
 
 
-### Generic Pool Logging
-If you would like to see what the *generic-pool* module is doing your can enable console logging by setting *redis_log_pool* to `true`. This feature is off by default.
+### Logging
+If you would like to see what the *generic-pool* module is doing your can enable console logging by setting *logging* to `true`. This feature is off by default.
 
-    settings = {
-      redis_log_pool: true
+    options = {
+      logging: true
     }
 

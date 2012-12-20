@@ -1,34 +1,27 @@
-/* This example uses the Pool.acquire function to
- * acquire a client connection. */
-
-// You can customize the connection settings like this.
-settings = {
-	redis_port: 6379,
+// Example 1: Using the acquireHelper.
+// Our Settings
+options = {
   redis_host: '127.0.0.1',
-  redis_log_pool: false, // Turn on/off the generic-pool logging.
-  redis_timeout: 2000,
-  redis_min: 0
+  redis_port: 6379,
 }
-	
-var Pool = require('sol-redis-pool'); //sol-redis-pool
-	
-function Example(err, client) {
-	// Use redis client like you normally would.
-	console.log("You should see: null 'PONG'");
-	client.ping(function(err, result){
-		console.log(err, result);
-		// When you are done with the client release it like this.
-	  Pool.release(client);
-	});
-}
-	
-Pool.acquire(Example); 
+    
+var RedisPool = require('./index');
+var pool = new RedisPool(options);
 
-// Stop the example after 10 seconds.
-function stopExample() {
-	Pool.Drain(Pool, function() {
-		console.log('Pool drained, see ya.');
-	});
-}
-setTimeout(stopExample, 10000);
+// Handle the error here...
+function errorCallback(err) {}
 
+function clientCallback(client) {
+  // Use the client then release it back to the pool.
+  client.ping(function(err, result) {
+	  console.log(err, result);
+		// Release the client...
+	  pool.release(client);
+		// Drain the pool so the example will end.
+		pool.drain(function(){
+			console.log('Done...');
+		});
+  })
+}
+console.log("If everything is working, you should see 'null 'PONG'.")
+pool.acquireHelper(errorCallback, clientCallback);
