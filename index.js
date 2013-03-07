@@ -7,11 +7,17 @@ function RedisPool(options) {
 		name: 'redis',
 		create: function(callback) {
 			try {
-				var client = redis.createClient(
-					options.redis_port || 6379,
-					options.redis_host || '127.0.0.1',
-					options.redis_options || {}
-				)
+				var client = null
+				if(options.unix_socket) {
+				  client = redis.createClient(options.unix_socket, null, options.redis_options || {})	
+				} else {
+					client = redis.createClient(
+					  options.redis_port || 6379,
+					  options.redis_host || '127.0.0.1',
+					  options.redis_options || {}
+				  )
+				}
+				
 				// Handle the client authentication if provided.
 				if(options.password) {
 					client.auth(options.password)

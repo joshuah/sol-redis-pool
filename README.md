@@ -85,6 +85,11 @@ Combine any the settings you may need into one global named settings.
 
 The default settings are port `6379` and `127.0.0.1`.
 
+### Redis Server using a Unix Socket
+    options = {
+      unix_socket: '/tmp/redis.sock'
+    }
+
 ### Additional Redis Options
 You can pass any *options* you normally would pass to the **redis.createClient()** function in `node-redis`. See the [node-redis documentation](https://github.com/mranney/node_redis#rediscreateclientport-host-options) for more information.
 
@@ -122,3 +127,5 @@ If you would like to see what the *generic-pool* module is doing your can enable
       logging: true
     }
 
+## Changes
+* 2013-03-06 - Added Unix socket support by setting the `unix_socket` option. 
