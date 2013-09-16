@@ -66,7 +66,7 @@ Combine any the settings you may need into one global named settings.
       redis_host: '127.0.0.1',
       redis_port: 6379,
       redis_options: {},
-      redis_password: 'dingbats'
+      password: 'dingbats'
       max_clients: 10,
       min_clients: 2,
       reapIntervalMillis: 5000,
@@ -97,7 +97,13 @@ You can pass any *options* you normally would pass to the **redis.createClient()
        redis_options: redisoptions…
     }
 
-You can also provide the redis server password by setting *redis_password*. **NOTE: This still needs testing…**
+### Authentication 
+Right now you have several options when authenticating. The example is how you should authenticate going forward. I will remove support for
+setting `options.password`, `options.redis_password` and `options.auth_pass` at the 0.2 release.
+
+    options = {
+        redis_options: {auth_pass: 'dingbats'}
+    }
 
 ## Generic Pool Options
 These options are used to control the **generic-pool**. You will normally not need to use any of these options.
@@ -128,4 +134,5 @@ If you would like to see what the *generic-pool* module is doing your can enable
     }
 
 ## Changes
+* 2013-09-16 - Fixed a bug in how authentication is handled. Updated the documentation to reflect changes.
 * 2013-03-06 - Added Unix socket support by setting the `unix_socket` option. 

@@ -2,7 +2,17 @@ var redis = require('redis')
   , Pool = require('generic-pool').Pool;
 
 function RedisPool(options) {
-  this.options = options;	
+  if(!options) options = {redis_options:{auth_pass: null}}
+	if(!options.redis_options) options['redis_options'] = {auth_pass: null}
+	
+	// Accept a password set byt using .redis_password, .password or .auth_pass. In the future
+	// I will require that the password be set under the redis_options settings.
+	if(options.redis_password) options['redis_options']['auth_pass'] = options.redis_password
+	if(options.password) options['redis_options']['auth_pass'] = options.password
+	if(options.auth_pass) options['redis_options']['auth_pass'] = options.auth_pass
+	
+  this.options = options;
+	
   this.pool = Pool({
 		name: 'redis',
 		create: function(callback) {
@@ -19,9 +29,10 @@ function RedisPool(options) {
 				}
 				
 				// Handle the client authentication if provided.
-				if(options.password) {
-					client.auth(options.password)
+				if(options.redis_auth.auth_pass) {
+					client.auth(options.redis_auth.auth_pass)
 				}
+				
 				callback(null, client);
 			} catch(e) {
 				callback(e, null)
@@ -58,6 +69,7 @@ RedisPool.prototype.release = function(client) {
 }
 
 // Acquires a client and gives you two callbacks.
+// This will be removed in the future...
 RedisPool.prototype.acquireHelper = function(errorCallback, clientCallback) {
 	this.pool.acquire(function(err, client) {
 		if(err) { return errorCallback(err, false);}
