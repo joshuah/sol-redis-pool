@@ -29,8 +29,8 @@ function RedisPool(options) {
 				}
 				
 				// Handle the client authentication if provided.
-				if(options.redis_auth.auth_pass) {
-					client.auth(options.redis_auth.auth_pass)
+				if(options.redis_options.auth_pass) {
+					client.auth(options.redis_options.auth_pass)
 				}
 				
 				callback(null, client);

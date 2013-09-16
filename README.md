@@ -134,5 +134,5 @@ If you would like to see what the *generic-pool* module is doing your can enable
     }
 
 ## Changes
-* 2013-09-16 - Fixed a bug in how authentication is handled. Updated the documentation to reflect changes.
+* 2013-09-16 [0.1.3] - Fixed a bug in how authentication is handled. Updated the documentation to reflect changes.
 * 2013-03-06 - Added Unix socket support by setting the `unix_socket` option. 
