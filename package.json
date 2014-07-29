@@ -10,7 +10,7 @@
     "url": "git://github.com/joshuah/sol-redis-pool.git"
   },
 	"dependencies" : {
-    "generic-pool" : "*",
+    "generic-pool" : "1.0.12",
 		"redis" : "*"
   },
   "engines": { "node": ">= 0.10.0" }
