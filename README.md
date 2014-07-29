@@ -52,7 +52,7 @@ This method will release your client object back into the pool.
 
 ### acquireHelper(errorCallback, clientCallback)
 This method accepts two callbacks. The error callback is called if the pool
-cannot return a client. `errorCallback(err)`. The clientCallback(client) returns the redis client connection. Note: You still need to **release** the client object.
+cannot return a client. `errorCallback(err)`. The clientCallback(client) returns the redis client connection. Note: You still need to **release** the client object. *This function will be removed in the 0.2 release*
 
 ### Drain(Pool, callback)
 This method will drain the connection pool completely and execute the callback when finished. You should call this when you want to close your application. If you do not your application will continue to run forever.
@@ -134,5 +134,6 @@ If you would like to see what the *generic-pool* module is doing your can enable
     }
 
 ## Changes
+* 2014-07-28 [0.1.4] - Pinned generic-pool version 2.1.0 in package.json. Thanks to David Aebersold for tagging pull request. 
 * 2013-09-16 [0.1.3] - Fixed a bug in how authentication is handled. Updated the documentation to reflect changes.
 * 2013-03-06 - Added Unix socket support by setting the `unix_socket` option. 
