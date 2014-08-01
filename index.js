@@ -1,80 +1,136 @@
-var redis = require('redis')
-  , Pool = require('generic-pool').Pool;
+/**
+ * Module dependencies.
+ */
 
-function RedisPool(options) {
-  if(!options) options = {redis_options:{auth_pass: null}}
-	if(!options.redis_options) options['redis_options'] = {auth_pass: null}
-	
-	// Accept a password set byt using .redis_password, .password or .auth_pass. In the future
-	// I will require that the password be set under the redis_options settings.
-	if(options.redis_password) options['redis_options']['auth_pass'] = options.redis_password
-	if(options.password) options['redis_options']['auth_pass'] = options.password
-	if(options.auth_pass) options['redis_options']['auth_pass'] = options.auth_pass
-	
-  this.options = options;
-	
-  this.pool = Pool({
-		name: 'redis',
-		create: function(callback) {
-			try {
-				var client = null
-				if(options.unix_socket) {
-				  client = redis.createClient(options.unix_socket, null, options.redis_options || {})	
-				} else {
-					client = redis.createClient(
-					  options.redis_port || 6379,
-					  options.redis_host || '127.0.0.1',
-					  options.redis_options || {}
-				  )
-				}
-				
-				// Handle the client authentication if provided.
-				if(options.redis_options.auth_pass) {
-					client.auth(options.redis_options.auth_pass)
-				}
-				
-				callback(null, client);
-			} catch(e) {
-				callback(e, null)
-			}
-		},
-		destroy: function(client) {
-			client.end();
-		},
-		max: options.max_clients || 10,
-    min: options.min_clients || 2,
-    reapIntervalMillis: options.reapIntervalMillis || 1000,
-    idleTimeoutMillis: options.idleTimeoutMillis || 30000,
-    log: options.logging || false
-	})
+var EventEmitter = require('events').EventEmitter
+  , util = require('util')
+  , Pool = require('generic-pool').Pool
+  , redis = require('redis');
+
+var SUPPORTED_REDIS_OPTIONS = [
+    "parser", "return_buffers", "detect_buffers", "socket_nodelay",
+    "socket_keepalive", "no_ready_check", "enable_offline_queue",
+    "retry_max_delay", "connect_timeout", "max_attempts", "family",
+    "auth_pass"
+];
+
+var SUPPORTED_POOL_OPTIONS = [
+    "name", "max", "min", "refreshIdle", "idleTimeoutMillis",
+    "reapIntervalMillis", "returnToHead","priorityRange"
+];
+
+function isFunction(functionToCheck) {
+ var getType = {};
+ return functionToCheck && getType.toString.call(functionToCheck) === '[object Function]';
 }
 
-// Drains the connection pool.
-RedisPool.prototype.drain = function(callback) {
-	var self = this;
-  self.pool.drain(function() {
-    self.pool.destroyAllNow();
-    callback();
-  })
+function copyAllowedKeys(allowed, source, destination) {
+    function copyAllowedKey(key) {
+        if(key in source) {
+            destination[key] = source[key];
+        }
+    }
+    allowed.forEach(copyAllowedKey);
+    return destination;
 }
 
-// Used to acquire a client connection.
-RedisPool.prototype.acquire = function(callback) {
-  this.pool.acquire(callback);
+function RedisPool(redisOptions, poolOptions) {
+    var self = this;
+    self._pool = null;
+    self._redis_host = redisOptions.host || null;
+    self._redis_port = redisOptions.port || null;
+    self._redis_unix_socket = redisOptions.unix_socket || null;
+    self._redis_options = copyAllowedKeys(SUPPORTED_REDIS_OPTIONS, redisOptions, {});
+    self._pool_options = copyAllowedKeys(SUPPORTED_POOL_OPTIONS, poolOptions, {});
+}
+util.inherits(RedisPool, EventEmitter);
+
+// Initialize the RedisPool.
+RedisPool.prototype._initialize = function _initialize() {
+    var self = this;
+    var redisSettings = self._redis_options;
+    var poolSettings = self._pool_options;
+    
+    // Build new Redis database clients.
+    poolSettings["create"] = function Create(cb) {
+        var client = null;
+
+        // Detect if application wants to use Unix sockets or TCP connections.
+        if (self._redis_unix_socket != null) {
+            client = redis.createClient(self._redis_unix_socket, null, self._redis_options);
+        } else {
+            client = redis.createClient(self._redis_port, self._redis_host, self._redis_options);    
+        }
+        
+        // Handle client connection errors.
+        client.on("error", clientErrorCallback);
+        
+        function clientErrorCallback(err) {
+            // Emit client connection errors to connection pool users.
+            self.emit("error", err);
+        }
+
+        // Register the authentication password if needed.
+        if (redisSettings.auth_pass) {
+            client.auth(redisSettings.auth_pass);
+        }
+        
+        cb(null, client);
+    }
+    
+    // The destroy function is called when client connection needs to be closed.
+    poolSettings["destroy"] = function destroyClient(client) {
+        client.end();
+        self.emit("destroy", null);
+    }
+    
+    // Now that the pool settings are ready create a pool instance.
+    self._pool = Pool(poolSettings);
+    return this;
 }
 
-// Used to release a client connection.
-RedisPool.prototype.release = function(client) {
-  this.pool.release(client);
+// Acquire a database connection and use an optional priority.
+RedisPool.prototype.acquire = function acquireClient(cb, priority) {
+    this._pool.acquire(cb, priority);
+}
+// Release a database connection to the pool.
+RedisPool.prototype.release = function releaseClient(client) {
+     this._pool.release(client);
 }
 
-// Acquires a client and gives you two callbacks.
-// This will be removed in the future...
-RedisPool.prototype.acquireHelper = function(errorCallback, clientCallback) {
-	this.pool.acquire(function(err, client) {
-		if(err) { return errorCallback(err, false);}
-		return clientCallback(client);
-	})
+// Drains the connection pool and call the callback id provided.
+RedisPool.prototype.drain = function drainRedisPool(cb) {
+    var self = this;
+    self._pool.drain(function() {
+        self._pool.destroyAllNow();
+        if (isFunction(cb)) {
+            cb();    
+        }
+    });
 }
 
-module.exports = RedisPool;
+// Returns factory.name for this pool
+RedisPool.prototype.getName = function getName(){
+    return this._pool.getName();
+}
+
+// Returns number of resources in the pool regardless of
+// whether they are free or in use
+RedisPool.prototype.getPoolSize = function getPoolSize(){
+    return this._pool.getPoolSize();
+}
+
+// Returns number of unused resources in the pool
+RedisPool.prototype.availableObjectsCount = function availableObjectsCount() {
+    return this._pool.availableObjectsCount();
+}
+
+// Returns number of callers waiting to acquire a resource
+RedisPool.prototype.waitingClientsCount = function waitingClientsCount() {
+    return this._pool.waitingClientsCount();    
+}
+
+// Export this module.
+module.exports = function createPool(redisOptions, poolOptions) {
+    return new RedisPool(redisOptions, poolOptions)._initialize();
+};
