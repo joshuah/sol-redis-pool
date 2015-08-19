@@ -11,7 +11,7 @@ var SUPPORTED_REDIS_OPTIONS = [
     "parser", "return_buffers", "detect_buffers", "socket_nodelay",
     "socket_keepalive", "no_ready_check", "enable_offline_queue",
     "retry_max_delay", "connect_timeout", "max_attempts", "family",
-    "auth_pass"
+    "auth_pass", "db"
 ];
 
 var SUPPORTED_POOL_OPTIONS = [
@@ -39,6 +39,7 @@ function RedisPool(redisOptions, poolOptions) {
     self._pool = null;
     self._redis_host = redisOptions.host || null;
     self._redis_port = redisOptions.port || null;
+    self._redis_default_db = redisOptions.db || 0;
     self._redis_unix_socket = redisOptions.unix_socket || null;
     self._redis_options = copyAllowedKeys(SUPPORTED_REDIS_OPTIONS, redisOptions, {});
     self._pool_options = copyAllowedKeys(SUPPORTED_POOL_OPTIONS, poolOptions, {});
@@ -60,6 +61,10 @@ RedisPool.prototype._initialize = function _initialize() {
             client = redis.createClient(self._redis_unix_socket, null, self._redis_options);
         } else {
             client = redis.createClient(self._redis_port, self._redis_host, self._redis_options);    
+        }
+
+        if (self._redis_default_db != 0) {
+            client.select(self._redis_default_db);
         }
         
         // Handle client connection errors.
@@ -93,9 +98,24 @@ RedisPool.prototype._initialize = function _initialize() {
 RedisPool.prototype.acquire = function acquireClient(cb, priority) {
     this._pool.acquire(cb, priority);
 }
+
+RedisPool.prototype.acquireDb = function acquireClientUsingDb(cb, db, priority) {
+    this._pool.acquire(function(err, client) {
+        if(!err) {
+            client._db_selected = db;
+            client.select(db)
+        }
+        return cb(err, client);
+    }, priority);
+}
+
 // Release a database connection to the pool.
 RedisPool.prototype.release = function releaseClient(client) {
-     this._pool.release(client);
+    var self = this;
+    // Always reset the DB to the default. This prevents issues
+    // if a user uses the select command to change the DB.
+    client.select(self._redis_default_db);
+    this._pool.release(client);
 }
 
 // Drains the connection pool and call the callback id provided.

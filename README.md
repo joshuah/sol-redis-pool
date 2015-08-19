@@ -20,7 +20,8 @@ Create a new Redis connection pool.
     var redisSettings = {
         host: "127.0.0.1",
         port: 6379,
-        auth_pass: "dingbats"
+        auth_pass: "dingbats",
+        db: 3 // Set the default DB number.
     };
     
     // Configure the generic-pool settings.
@@ -109,6 +110,9 @@ Acquires a redis client from the pool. The callback is passed an **err** and **c
 
 The pool now supports optional priority queueing. This becomes relevant when no resources are available and the caller has to wait. acquire() accepts an optional priority int which specifies the caller's relative position in the queue. This requires setting the pool option  *priorityRange*. See https://github.com/coopernurse/node-pool/blob/master/README.md for more information.
 
+### acquireDb(callback, db, [priority])
+Same as the aquire method but allows you to select a DB.
+
 ### release(client)
 This method will release your client object back into the pool. Use this method when you no longer need the client.
 
@@ -144,6 +148,11 @@ Examples are located in the examples/ folder in the repository. These examples w
 * ping-example.js   - a simple example that issues a Redis PING command.
 
 ## History
+0.2.1 - August 19 2015
+- Added DB selection features. A default DB can be selected by adding "a {db: X} object to the redisOptions. There is also a new .aquireDb(callback, db, [priority]) function that can be used to select a DB wher aquiring an object from the pool. These changes introduce additional SELECT commands to your pooled connections.
+- The release function automatically executes a select command before releasing the redis connection back to the pool. This prevents a connection to an unknown DB being released and then aquired.
+- Added a new example script for database selection. See db-select.js...
+
 0.2.0 - July 31 2014
 - A complete rewrite of the module with breaking changes.
 - Supports additional **node_redis** options. 
