@@ -5,6 +5,7 @@
   "author": "Joshua Heiks <joshuaheiks@gmail.com>",
   "keywords": ["pool", "redis"],
   "main": "index.js",
+  "license": "BSD-3-Clause",
   "repository": {
     "type": "git",
     "url": "git://github.com/joshuah/sol-redis-pool.git"
