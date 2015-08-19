@@ -79,6 +79,11 @@ RedisPool.prototype._initialize = function _initialize() {
         if (redisSettings.auth_pass) {
             client.auth(redisSettings.auth_pass);
         }
+
+        //select redis DB
+        if (redisSettings.db) {
+            client.select(redisSettings.db);
+        }
         
         cb(null, client);
     }
