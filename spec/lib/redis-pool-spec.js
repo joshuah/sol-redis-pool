@@ -80,3 +80,10 @@ describe('availableObjectsCount', function() {
     done();
   });
 });
+
+describe('waitingClientsCount', function() {
+  it('should returns number of callers waiting to acquire a resource', function(done) {
+    expect(redisPool.waitingClientsCount()).not.toBe(null);
+    done();
+  });
+});
