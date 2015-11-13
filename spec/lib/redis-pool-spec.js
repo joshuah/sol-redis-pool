@@ -10,3 +10,15 @@ beforeAll(function() {
     min: 2
   });
 });
+
+describe('initialize', function() {
+  it('should initialize the module', function(done) {
+    expect(redisPool).not.toBe(null);
+    done();
+  });
+
+  it('should initialize the module with a given db', function(done) {
+    expect(redisPool).not.toBe(null);
+    done();
+  });
+});
