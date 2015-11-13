@@ -59,3 +59,10 @@ describe('drain', function() {
     redisPool.drain(done);
   });
 });
+
+describe('getName', function() {
+  it('should returns factory.name for this pool', function(done) {
+    expect(redisPool.getName()).not.toBe(null);
+    done();
+  });
+});
