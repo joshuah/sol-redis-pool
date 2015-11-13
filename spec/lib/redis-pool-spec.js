@@ -66,3 +66,10 @@ describe('getName', function() {
     done();
   });
 });
+
+describe('getPoolSize', function() {
+  it('should returns number of resources in the pool', function(done) {
+    expect(redisPool.getPoolSize()).not.toBe(null);
+    done();
+  });
+});
