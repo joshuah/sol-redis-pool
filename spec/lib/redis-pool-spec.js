@@ -53,3 +53,9 @@ describe('acquireDb', function() {
     }, 1);
   });
 });
+
+describe('drain', function() {
+  it('should drains the connection pool and call the callback', function(done) {
+    redisPool.drain(done);
+  });
+});
