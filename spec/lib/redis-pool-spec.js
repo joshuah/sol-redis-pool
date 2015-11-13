@@ -73,3 +73,10 @@ describe('getPoolSize', function() {
     done();
   });
 });
+
+describe('availableObjectsCount', function() {
+  it('should returns number of unused resources in the pool', function(done) {
+    expect(redisPool.availableObjectsCount()).not.toBe(null);
+    done();
+  });
+});
