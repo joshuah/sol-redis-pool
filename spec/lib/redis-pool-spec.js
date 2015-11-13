@@ -22,3 +22,23 @@ describe('initialize', function() {
     done();
   });
 });
+
+describe('acquire', function() {
+  it('should acquire a database connection', function(done) {
+    redisPool.acquire(function(err, conn) {
+      expect(err).toBe(null);
+      expect(conn).not.toBe(null);
+      redisPool.release(conn);
+      done();
+    });
+  });
+
+  it('should acquire a database connection with a priority', function(done) {
+    redisPool.acquire(function(err, conn) {
+      expect(err).toBe(null);
+      expect(conn).not.toBe(null);
+      redisPool.release(conn);
+      done();
+    }, 0);
+  });
+});
