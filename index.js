@@ -45,13 +45,13 @@ function RedisPool(redisOptions, poolOptions) {
 util.inherits(RedisPool, EventEmitter);
 
 // Initialize the RedisPool.
-RedisPool.prototype._initialize = function _initialize() {
+RedisPool.prototype._initialize = function() {
   var self = this;
   var redisSettings = self._redis_options;
   var poolSettings = self._pool_options;
 
   // Build new Redis database clients.
-  poolSettings.create = function Create(cb) {
+  poolSettings.create = function(cb) {
     var client = null;
 
     // Detect if application wants to use Unix sockets or TCP connections.
@@ -82,7 +82,7 @@ RedisPool.prototype._initialize = function _initialize() {
   };
 
   // The destroy function is called when client connection needs to be closed.
-  poolSettings.destroy = function destroyClient(client) {
+  poolSettings.destroy = function(client) {
     try {
       client.end();
     } catch (err) {
@@ -97,11 +97,11 @@ RedisPool.prototype._initialize = function _initialize() {
 };
 
 // Acquire a database connection and use an optional priority.
-RedisPool.prototype.acquire = function acquireClient(cb, priority) {
+RedisPool.prototype.acquire = function(cb, priority) {
   this._pool.acquire(cb, priority);
 };
 
-RedisPool.prototype.acquireDb = function acquireClientUsingDb(cb, db, priority) {
+RedisPool.prototype.acquireDb = function(cb, db, priority) {
   this._pool.acquire(function(err, client) {
     if (!err) {
       client._db_selected = db;
@@ -112,7 +112,7 @@ RedisPool.prototype.acquireDb = function acquireClientUsingDb(cb, db, priority) 
 };
 
 // Release a database connection to the pool.
-RedisPool.prototype.release = function releaseClient(client) {
+RedisPool.prototype.release = function(client) {
   var self = this;
   // Always reset the DB to the default. This prevents issues
   // if a user uses the select command to change the DB.
@@ -121,7 +121,7 @@ RedisPool.prototype.release = function releaseClient(client) {
 };
 
 // Drains the connection pool and call the callback id provided.
-RedisPool.prototype.drain = function drainRedisPool(cb) {
+RedisPool.prototype.drain = function(cb) {
   var self = this;
   self._pool.drain(function() {
     self._pool.destroyAllNow();
@@ -132,27 +132,27 @@ RedisPool.prototype.drain = function drainRedisPool(cb) {
 };
 
 // Returns factory.name for this pool
-RedisPool.prototype.getName = function getName() {
+RedisPool.prototype.getName = function() {
   return this._pool.getName();
 };
 
 // Returns number of resources in the pool regardless of
 // whether they are free or in use
-RedisPool.prototype.getPoolSize = function getPoolSize() {
+RedisPool.prototype.getPoolSize = function() {
   return this._pool.getPoolSize();
 };
 
 // Returns number of unused resources in the pool
-RedisPool.prototype.availableObjectsCount = function availableObjectsCount() {
+RedisPool.prototype.availableObjectsCount = function() {
   return this._pool.availableObjectsCount();
 };
 
 // Returns number of callers waiting to acquire a resource
-RedisPool.prototype.waitingClientsCount = function waitingClientsCount() {
+RedisPool.prototype.waitingClientsCount = function() {
   return this._pool.waitingClientsCount();
 };
 
 // Export this module.
-module.exports = function createPool(redisOptions, poolOptions) {
+module.exports = function(redisOptions, poolOptions) {
   return new RedisPool(redisOptions, poolOptions)._initialize();
 };
