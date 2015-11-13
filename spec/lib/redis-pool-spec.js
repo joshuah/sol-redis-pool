@@ -42,3 +42,14 @@ describe('acquire', function() {
     }, 0);
   });
 });
+
+describe('acquireDb', function() {
+  it('should acquire a given database connection', function(done) {
+    redisPool.acquireDb(function(err, conn) {
+      expect(err).toBe(null);
+      expect(conn).not.toBe(null);
+      redisPool.release(conn);
+      done();
+    }, 1);
+  });
+});
