@@ -66,12 +66,10 @@ RedisPool.prototype._initialize = function() {
     }
 
     // Handle client connection errors.
-    client.on('error', clientErrorCallback);
-
-    function clientErrorCallback(err) {
+    client.on('error', function(err) {
       // Emit client connection errors to connection pool users.
       self.emit('error', err);
-    }
+    });
 
     // Register the authentication password if needed.
     if (redisSettings.auth_pass) {
