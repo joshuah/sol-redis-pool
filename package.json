@@ -3,16 +3,29 @@
   "description": "Generic resource pooling for Node.JS",
   "version": "0.2.1",
   "author": "Joshua Heiks <joshuaheiks@gmail.com>",
-  "keywords": ["pool", "redis"],
+  "keywords": [
+    "pool",
+    "redis"
+  ],
   "main": "index.js",
+  "scripts": {
+    "test": "./node_modules/.bin/jasmine",
+    "coverage": "./node_modules/.bin/istanbul cover ./node_modules/.bin/jasmine"
+  },
   "license": "BSD-3-Clause",
   "repository": {
     "type": "git",
     "url": "git://github.com/joshuah/sol-redis-pool.git"
   },
-	"dependencies" : {
-    "generic-pool" : "2.1.1",
-		"redis" : ">= 0.11.0"
+  "dependencies": {
+    "generic-pool": "2.1.1",
+    "redis": ">= 0.11.0"
   },
-  "engines": { "node": ">= 0.10.0" }
+  "engines": {
+    "node": ">= 0.10.0"
+  },
+  "devDependencies": {
+    "istanbul": "^0.4.0",
+    "jasmine": "^2.3.2"
+  }
 }
