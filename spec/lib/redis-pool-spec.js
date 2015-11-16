@@ -11,6 +11,27 @@ beforeAll(function() {
   });
 });
 
+describe('defaults', function() {
+  beforeAll(function() {
+    redisPool = new RedisPool({}, {});
+  })
+  
+  it('should default the host to null', function(done) {
+  	expect(redisPool._redis_host).toBe(null);
+  	done();
+  });
+
+  it('should default the port to null', function(done) {
+  	expect(redisPool._redis_port).toBe(null);
+  	done();
+  });
+
+  it('should default the db to 0', function(done) {
+  	expect(redisPool._redis_default_db).toBe(0);
+  	done();
+  });
+});
+
 describe('initialize', function() {
   it('should initialize the module', function(done) {
     expect(redisPool).not.toBe(null);
