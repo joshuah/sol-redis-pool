@@ -42,6 +42,12 @@ describe('initialize', function() {
     expect(redisPool).not.toBe(null);
     done();
   });
+
+  it('should initialize the module with a redis socket connection', function(done) {
+    redisPool = new RedisPool({'unix_socket': '/tmp/redis.sock'}, {});
+    expect(redisPool).not.toBe(null);
+    done();
+  });
 });
 
 describe('acquire', function() {
