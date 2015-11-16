@@ -148,6 +148,12 @@ Examples are located in the examples/ folder in the repository. These examples w
 * ping-example.js   - a simple example that issues a Redis PING command.
 
 ## History
+
+0.2.2 - November 16 2015
+- Added jslint support (jkernech)
+- Added unit tests and code coverage (jkernech)
+- Updated generic-pool to version 2.2.1. 
+
 0.2.1 - August 19 2015
 - Added DB selection features. A default DB can be selected by adding "a {db: X} object to the redisOptions. There is also a new .aquireDb(callback, db, [priority]) function that can be used to select a DB wher aquiring an object from the pool. These changes introduce additional SELECT commands to your pooled connections.
 - The release function automatically executes a select command before releasing the redis connection back to the pool. This prevents a connection to an unknown DB being released and then aquired.

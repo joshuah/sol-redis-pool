@@ -1,7 +1,7 @@
 {
   "name": "sol-redis-pool",
   "description": "Generic resource pooling for Node.JS",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "author": "Joshua Heiks <joshuaheiks@gmail.com>",
   "keywords": [
     "pool",
@@ -18,8 +18,8 @@
     "url": "git://github.com/joshuah/sol-redis-pool.git"
   },
   "dependencies": {
-    "generic-pool": "2.1.1",
-    "redis": ">= 0.11.0"
+    "generic-pool": "2.2.1",
+    "redis": ">= 2.3.0"
   },
   "engines": {
     "node": ">= 0.10.0"
