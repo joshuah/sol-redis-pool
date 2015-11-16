@@ -14,7 +14,7 @@ beforeAll(function() {
 describe('defaults', function() {
   beforeAll(function() {
     redisPool = new RedisPool({}, {});
-  })
+  });
   
   it('should default the host to null', function(done) {
   	expect(redisPool._redis_host).toBe(null);
