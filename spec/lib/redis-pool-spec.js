@@ -114,3 +114,24 @@ describe('waitingClientsCount', function() {
     done();
   });
 });
+
+describe('redisErrorEvent', function() {
+  it('should emit an error', function(done) {
+  	redisPool = new RedisPool({host: '127.0.0.10'}, {}); 
+  	redisPool.on('error', function(err) {
+      expect(err).not.toBe(null);
+      done();
+    });
+  	redisPool.acquire(function(err, conn) {
+      redisPool.release(conn);
+    });
+  });
+
+  it('should emit an error when the pool is destroyed', function(done) {
+  	redisPool.on('error', function(err) {
+      expect(err).not.toBe(null);
+      done();
+    });
+    redisPool._pool.destroy(null);
+  });
+});
