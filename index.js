@@ -101,7 +101,7 @@ RedisPool.prototype.acquire = function(cb, priority) {
 
 RedisPool.prototype.acquireDb = function(cb, db, priority) {
   this._pool.acquire(function(err, client) {
-    if (!err) {
+    if (!err && client._db_selected !== db) {
       client._db_selected = db;
       client.select(db);
     }
@@ -113,8 +113,10 @@ RedisPool.prototype.acquireDb = function(cb, db, priority) {
 RedisPool.prototype.release = function(client) {
   var self = this;
   // Always reset the DB to the default. This prevents issues
-  // if a user uses the select command to change the DB.
-  client.select(self._redis_default_db);
+  // if a user used the select command to change the DB.
+  if (client._db_selected !== self._redis_default_db) {
+    client.select(self._redis_default_db);
+  }
   this._pool.release(client);
 };
 
