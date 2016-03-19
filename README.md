@@ -150,6 +150,9 @@ Examples are located in the examples/ folder in the repository. These examples w
 
 ## History
 
+0.2.4 - March 19 2016
+- Fixed warnings for issue #14.
+
 0.2.3 - February 23 2016
 - DB selection performance fix for issues #12 & #13. (PuKoren)
 - Added caveat for users who are using the select command after they acquire a connection.
