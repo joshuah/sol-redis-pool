@@ -19,7 +19,7 @@
   },
   "dependencies": {
     "generic-pool": "2.2.1",
-    "redis": ">= 2.3.0"
+    "redis": "2.5.3"
   },
   "engines": {
     "node": ">= 0.10.0"
