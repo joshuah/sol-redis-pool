@@ -8,7 +8,7 @@ var SUPPORTED_REDIS_OPTIONS = [
   'parser', 'return_buffers', 'detect_buffers', 'socket_nodelay',
   'socket_keepalive', 'no_ready_check', 'enable_offline_queue',
   'retry_max_delay', 'connect_timeout', 'max_attempts', 'family',
-  'auth_pass', 'db'
+  'auth_pass', 'db', 'retry_strategy'
 ];
 
 var SUPPORTED_POOL_OPTIONS = [
