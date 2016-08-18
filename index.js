@@ -8,7 +8,7 @@ var SUPPORTED_REDIS_OPTIONS = [
   'parser', 'return_buffers', 'detect_buffers', 'socket_nodelay',
   'socket_keepalive', 'no_ready_check', 'enable_offline_queue',
   'retry_max_delay', 'connect_timeout', 'max_attempts', 'family',
-  'auth_pass', 'db'
+  'auth_pass', 'db', 'retry_strategy'
 ];
 
 var SUPPORTED_POOL_OPTIONS = [
@@ -82,7 +82,7 @@ RedisPool.prototype._initialize = function() {
   // The destroy function is called when client connection needs to be closed.
   poolSettings.destroy = function(client) {
     try {
-      // Flush when closing. 
+      // Flush when closing.
       client.end(true);
 
     } catch (err) {
@@ -109,6 +109,11 @@ RedisPool.prototype.acquireDb = function(cb, db, priority) {
     }
     return cb(err, client);
   }, priority);
+};
+
+// Destroy a database connection in the pool.
+RedisPool.prototype.destroy = function(client) {
+  this._pool.destroy(client);
 };
 
 // Release a database connection to the pool.
