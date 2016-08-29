@@ -1,34 +1,21 @@
 var config = require('../config.json');
 var RedisPool = require('../../index');
 
-
 var redisPool;
+var redisAuthPool;
 
 beforeAll(function() {
-  redisPool = new RedisPool(config.redis, {
-    max: 10,
-    min: 2
-  });
+  redisPool = new RedisPool(config.redis, config.pool);
 });
 
 describe('defaults', function() {
   beforeAll(function() {
     redisPool = new RedisPool({}, {});
   });
-  
-  it('should default the host to null', function(done) {
-  	expect(redisPool._redis_host).toBe(null);
-  	done();
-  });
-
-  it('should default the port to null', function(done) {
-  	expect(redisPool._redis_port).toBe(null);
-  	done();
-  });
 
   it('should default the db to 0', function(done) {
-  	expect(redisPool._redis_default_db).toBe(0);
-  	done();
+    expect(redisPool._redis_default_db).toBe(0);
+    done();
   });
 });
 
@@ -44,7 +31,7 @@ describe('initialize', function() {
   });
 
   it('should initialize the module with a redis socket connection', function(done) {
-    redisPool = new RedisPool({'unix_socket': '/tmp/redis.sock'}, {});
+    redisPool = new RedisPool(config.unixsocket, {});
     expect(redisPool).not.toBe(null);
     done();
   });
@@ -117,21 +104,23 @@ describe('waitingClientsCount', function() {
 
 describe('redisErrorEvent', function() {
   it('should emit an error', function(done) {
-  	redisPool = new RedisPool({host: '127.0.0.10'}, {}); 
-  	redisPool.on('error', function(err) {
+    redisPool = new RedisPool(config.badredis, config.pool); 
+    redisPool.on('error', function(err) {
       expect(err).not.toBe(null);
       done();
     });
-  	redisPool.acquire(function(err, conn) {
+    redisPool.acquire(function(err, conn) {
       redisPool.release(conn);
     });
   });
 
   it('should emit an error when the pool is destroyed', function(done) {
-  	redisPool.on('error', function(err) {
+    redisPool.on('destroy', function(err) {
       expect(err).not.toBe(null);
       done();
     });
     redisPool._pool.destroy(null);
   });
 });
+
+

@@ -5,10 +5,10 @@ var LOG_MESSAGE = 'Available: %s, Pool Size: %s';
 
 var redisSettings = {
   // Use TCP connections for Redis clients.
-  host: '127.0.0.1',
-  port: 6379,
+  path: "/tmp/redis.sock",
   // Set a redis client option.
-  password: 'dingbats' // Authenticate using the password dingbats...
+  enable_offline_queue: true,
+  no_ready_check: true
 };
 
 var poolSettings = {
@@ -24,6 +24,10 @@ var pool = RedisPool(redisSettings, poolSettings);
 // Get connection errors for logging...
 pool.on('error', function(reason) {
   console.log('Connection Error:', reason);
+});
+
+pool.on('destroy', function() {
+  console.log(util.format('Checking pool info after client destroyed: ' + LOG_MESSAGE, pool.availableObjectsCount(), pool.getPoolSize()));
 });
 
 pool.acquire(clientConnection);

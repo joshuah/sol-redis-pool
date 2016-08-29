@@ -1,9 +1,27 @@
 {
 	"redis": {
-		"host": "localhost",
+		"host": "127.0.0.1",
 		"port": 6379,
-		"auth_pass": "XXXXX",
 		"db": 1,
 		"ttl": 60
+	},
+	"badredis":{
+		"host": "127.0.0.10"
+	},
+	"unixsocket": {
+		"path": "/tmp/redis.sock"
+	},
+	"redisauth": {
+		"host": "127.0.0.1",
+		"port": 6380,
+		"db": 1,
+		"password": "XXXXX",
+		"ttl": 60
+	},
+	"pool": {
+		"max": 10,
+    	"min": 2,
+    	"idleTimeoutMillis": 3000,
+    	"reapIntervalMillis": 1500
 	}
 }

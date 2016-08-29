@@ -3,12 +3,12 @@ var util = require('util');
 var EventEmitter = require('events').EventEmitter;
 var Pool = require('generic-pool').Pool;
 
-
 var SUPPORTED_REDIS_OPTIONS = [
-  'parser', 'return_buffers', 'detect_buffers', 'socket_nodelay',
+  'host', 'port', 'path', 'url', 'password',
+  'string_numbers', 'return_buffers', 'detect_buffers', 
   'socket_keepalive', 'no_ready_check', 'enable_offline_queue',
-  'retry_max_delay', 'connect_timeout', 'max_attempts', 'family',
-  'auth_pass', 'db'
+  'retry_unfulfilled_commands', 'family', 'disable_resubscribing',
+  'rename_commands', 'auth_pass', 'db', 'retry_strategy'
 ];
 
 var SUPPORTED_POOL_OPTIONS = [
@@ -34,10 +34,7 @@ function copyAllowedKeys(allowed, source, destination) {
 function RedisPool(redisOptions, poolOptions) {
   var self = this;
   self._pool = null;
-  self._redis_host = redisOptions.host || null;
-  self._redis_port = redisOptions.port || null;
   self._redis_default_db = redisOptions.db || 0;
-  self._redis_unix_socket = redisOptions.unix_socket || null;
   self._redis_options = copyAllowedKeys(SUPPORTED_REDIS_OPTIONS, redisOptions, {});
   self._pool_options = copyAllowedKeys(SUPPORTED_POOL_OPTIONS, poolOptions, {});
 }
@@ -52,18 +49,8 @@ RedisPool.prototype._initialize = function() {
 
   // Build new Redis database clients.
   poolSettings.create = function(cb) {
-    var client = null;
-
-    // Detect if application wants to use Unix sockets or TCP connections.
-    if (self._redis_unix_socket !== null) {
-      client = redis.createClient(self._redis_unix_socket, null, self._redis_options);
-    } else {
-      client = redis.createClient(self._redis_port, self._redis_host, self._redis_options);
-    }
-
-    if (self._redis_default_db !== 0) {
-      client.select(self._redis_default_db);
-    }
+    // Create a new redis client.
+    var client = redis.createClient(self._redis_options);
 
     // Handle client connection errors.
     client.on('error', function(err) {
@@ -71,24 +58,23 @@ RedisPool.prototype._initialize = function() {
       self.emit('error', err);
     });
 
-    // Register the authentication password if needed.
-    if (redisSettings.auth_pass) {
-      client.auth(redisSettings.auth_pass);
-    }
+    // Let the application know that a pool client is attempting to reconnect.
+    client.on('reconnecting', function(delay, attempt) {
+      self.emit('reconnecting', delay, attempt);
+    })
 
     cb(null, client);
   };
 
   // The destroy function is called when client connection needs to be closed.
   poolSettings.destroy = function(client) {
+    // Flush when closing.
     try {
-      // Flush when closing. 
       client.end(true);
-
-    } catch (err) {
-      return self.emit('error', 'Error destroying redis client.');
+      self.emit('destroy', null);
+    } catch(err) {
+      self.emit('destroy', err);
     }
-    self.emit('destroy', null);
   };
 
   // Now that the pool settings are ready create a pool instance.
@@ -126,10 +112,7 @@ RedisPool.prototype.release = function(client) {
 RedisPool.prototype.drain = function(cb) {
   var self = this;
   self._pool.drain(function() {
-    self._pool.destroyAllNow();
-    if (isFunction(cb)) {
-      cb();
-    }
+    self._pool.destroyAllNow(cb);
   });
 };
 
