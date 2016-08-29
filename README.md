@@ -51,6 +51,7 @@ Create a new Redis connection pool.
 
 ### Authentication
 The `auth_pass` option is deprecated. Please use the `password` option instead.
+
 | Property  | Description |
 |-----------|-----------|
 | password | If set, the client will run redis auth command on connect. |
