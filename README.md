@@ -11,8 +11,6 @@ A simple Redis pool for node using generic-pool.
 ## Caveats
 Pull requests welcome...
 
-- When the **select** command is used after a client is acquired, the release method will not reset the client back to its origin state. You should either request the db with the **aquireDb** method or make sure you issue a **select** command before releasing the client back to the pool. 
-
 ## Constructor:  RedisPool(redis_settings, pool_settings)
 Create a new Redis connection pool.
 
@@ -75,30 +73,17 @@ When you acquire a new client these options can be passed to the Redis client. S
 | rename_commands | null | Passing an object with renamed commands to use instead of the original functions. See the [Redis security topics](http://redis.io/topics/security) for more info. |
 | retry_strategy | function | A function that receives an options object as parameter including the retry `attempt`, the `total_retry_time` indicating how much time passed since the last time connected, the `error` why the connection was lost and the number of `times_connected` in total. If you return a number from this function, the retry will happen exactly after that time in milliseconds. If you return a non-number, no further retry will happen and all offline commands are flushed with errors. Return an error to return that specific error to all offline commands. Example below. |
 
-### Retry Example
+## Retry Strategy
+Note: The `error` value is set to null on the first failure.  
 
 ```js
-    retry_strategy: function (options) {
-        if (options.times_connected > 10) {
-            // Stop retrying afer 10 attempts.
-            return undefined;
-        }
-        // Increase reconnect delay by 150ms.
-        return options.attempt * 150;
-    }
-```
-
-**Example Options on First attempt:**
-```js
+// The first connection attempt.
 { attempt: 1,
   error: null,
   total_retry_time: 0,
   times_connected: 1 }
-```
-  
-**Example Options on Second Attempt:**
- ```js
- { attempt: 2,
+// The second attempt.
+{ attempt: 2,
   error: 
    { [Error: Redis connection to 127.0.0.1:6379 failed - connect ECONNREFUSED 127.0.0.1:6379]
      code: 'ECONNREFUSED',
@@ -109,6 +94,28 @@ When you acquire a new client these options can be passed to the Redis client. S
   total_retry_time: 1000,
   times_connected: 1 }
 ```
+
+### A Simple Reconnect Strategy.
+
+```js
+    retry_strategy: function (options) {
+        if (options.attempt > 10) {
+            // Stop retrying afer 10 attempts.
+            return undefined;
+        }
+        // Increase reconnect delay by 150ms.
+        return options.attempt * 150;
+    }
+```
+
+### No Reconnect Strategy
+Use this strategy when you want to pool to not attempt reconnections.
+```js
+    retry_strategy: function (options) {
+        return undefined;
+    }
+```
+
 
 ## Generic Pool Settings
 Supported **generic-pool** settings. See https://github.com/coopernurse/node-pool/blob/master/README.md for more information.
@@ -156,13 +163,13 @@ Returns number of callers waiting to acquire a resource.
 Additional events will be added. 
 
 ### "error"
-This event is emitted when a Redis client emits an "error", connection error event. You still need to pay attention to the **err** passed to your callback when you issue an acquire.
+This event is emitted when a Redis client emits an "error", connection error event. You still need to pay attention to the **err** passed to your callback when you issue an acquire. The error object contains an attribute named `cid` for tracking which client connection had an error.
 
 ### "reconnecting"
-The pool will emit reconnecting when trying to reconnect to the Redis server after losing the connection. Listeners are passed an object containing **delay** (in ms) and **attempt** (the attempt #) attributes.
+The pool will emit reconnecting when trying to reconnect to the Redis server after losing the connection. Listeners are passed an object containing **delay** (in ms), **attempt** (the attempt #), and **cid** attributes.
 
 ### "destroy"
-This event is emitted when a Redis client is closed by the connection pool. This is a good location to inspect your RedisPool stats using the `availableObjectsCount()` and `waitingClientsCount()` methods.
+This event is emitted when a Redis client is closed by the connection pool. The event will pass an **error** and **cid** value. 
 
 ## Examples
 Examples are located in the examples/ folder in the repository. These examples will automatically close when done. If you change the *min* option for the pool the application will stay running forever.
@@ -170,8 +177,20 @@ Examples are located in the examples/ folder in the repository. These examples w
 * authentication.js - shows an example using a redis password. 
 * oversubscribe.js  - shows what happens when you request more clients than you have in your pool.
 * ping-example.js   - a simple example that issues a Redis PING command.
+* offline.js - shows how the `enable_offline_queue` option and recovery works.
+* retry.js - shows a `retry_strategy` option in action.
+* unix.js - shows a unix socket connection.
 
 ## History
+0.3.1 - August 31 2016
+- Prevent the `pool.release(client)` method from releasing a disconnected client back into the pool. Fixes issue #19. Some users may need to watch their pool **min** value.
+- Added connection tracking to all clients int the pool. You may access the value using the `client._sol_cid` property. This value is passed to the `destroy`, `reconnecting`, and `error` events as well. This should help users with their application logging.
+- Improved the `retry_strategy` examples in the README.md and fixed the retry.js example.
+- Fixed some examples.
+- Fixed a bug in the `reconnecting` event.
+- Updated redis-pool-spec.js file.
+- Moved older changes to CHANGES.md
+
 0.3.0 - August 28 2016
 - Client Connection Changes:
    * Replaced the `auth_pass` option with `password`.
@@ -183,36 +202,3 @@ Examples are located in the examples/ folder in the repository. These examples w
 - Added options: 'string_numbers', 'retry_unfulfilled_commands', 'disable_resubscribing', 'rename_commands'
 - Changed minimum redis client version to 2.6.2. 
 - Added a reconnecting event. 
-
-0.2.4 - March 19 2016
-- Fixed warnings for issue #14.
-
-0.2.3 - February 23 2016
-- DB selection performance fix for issues #12 & #13. (PuKoren)
-- Added caveat for users who are using the select command after they acquire a connection.
-
-0.2.2 - November 16 2015
-- Added jslint support (jkernech)
-- Added unit tests and code coverage (jkernech)
-- Updated generic-pool to version 2.2.1. 
-
-0.2.1 - August 19 2015
-- Added DB selection features. A default DB can be selected by adding "a {db: X} object to the redisOptions. There is also a new .aquireDb(callback, db, [priority]) function that can be used to select a DB wher aquiring an object from the pool. These changes introduce additional SELECT commands to your pooled connections.
-- The release function automatically executes a select command before releasing the redis connection back to the pool. This prevents a connection to an unknown DB being released and then aquired.
-- Added a new example script for database selection. See db-select.js...
-
-0.2.0 - July 31 2014
-- A complete rewrite of the module with breaking changes.
-- Supports additional **node_redis** options. 
-- Supports additional **generic-pool** options.
-- The pool now supports optional priority queueing. This becomes relevant when no resources are available and the caller has to wait.
-- Redis client client error events are now emitted from the Pool. This allows the connection pool to auto reconnect to the redis database properly.
-
-0.1.4 - July 28 2014
-- Pinned generic-pool version 2.1.0 in package.json. Thanks to David Aebersold for tagging pull request.
-
-0.1.3 - September 16 2013
-- Fixed a bug in how authentication is handled. Updated the documentation to reflect changes.
-
-0.1.2 - March 03 2013
-- Added Unix socket support by setting the unix_socket option.

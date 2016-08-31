@@ -1,28 +1,22 @@
 var util = require('util');
 var RedisPool = require('../index');
+var readline = require('readline');
 
-var LOG_MESSAGE = 'Available: %s, Pool Size: %s';
+console.log("This example shows how the enable_offline_queue flag works. You will need to shutdown your redis instance.");
 
 var redisSettings = {
   // Use TCP connections for Redis clients.
   host: '127.0.0.1',
   port: 6379,
-  retry_unfulfilled_commands: true,
-  retry_strategy: function (options) {
-    if (options.attempt > 10) {
-      // Stop retrying afer 10 attempts.
-      return undefined;
-    }
-    // Increase each reconnect delay by 150ms.
-    return options.attempt * 150;
-  }
+  // Set a redis client option.
+  enable_offline_queue: true,
+  no_ready_check: true
 };
 
 var poolSettings = {
   // Set the max milliseconds a resource can go unused before it should be destroyed.
-  idleTimeoutMillis: 10000,
+  idleTimeoutMillis: 5000,
   max: 5
-    // Setting min > 0 will prevent this application from ending.
 };
 
 // Create the pool.
@@ -30,36 +24,35 @@ var pool = RedisPool(redisSettings, poolSettings);
 
 // Get connection errors for logging...
 pool.on('error', function(reason) {
-  console.log('Example Connection Error:', reason);
+  console.log(" " + reason.code);
 });
 
-pool.on('destroy', function() {
-  console.log(util.format('Checking pool info after client destroyed: ' + LOG_MESSAGE, pool.availableObjectsCount(), pool.getPoolSize()));
+pool.on('destroy', function(err, cid) {
+  console.log("  Pool client destroyed: ID=%s", cid);
 });
-
-var maxPings = 10;
-var pings = 0;
 
 pool.acquire(clientConnection);
 
 function clientConnection(err, client) {
-  console.log(err);
+  console.log("clientConnection: ID=", client._sol_cid);
 
   function getPingResponse(err, response) {
     console.log('getPingResponse', err, response);
-    setTimeout(delayResponse, 2500);
+    pool.release(client);
   }
 
-  function delayResponse() {
-    // Release the client after 2500ms.
-    pings = pings + 1;
-    if(pings > maxPings) {
-      pool.release(client);
-    } else {
-      client.ping(getPingResponse);
-    }
-  }
-  delayResponse();
+  rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout
+  });
+
+  rl.question('Please stop your redis instance and press <enter>. ', (answer) => {
+
+    rl.close();
+    console.log("Sending a ping() command to the offline redis server.");
+    client.ping(getPingResponse);
+    console.log('   Queued... Ok, now please start the redis server.');
+  });
 
 }
 

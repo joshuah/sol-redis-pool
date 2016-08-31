@@ -47,34 +47,47 @@ RedisPool.prototype._initialize = function() {
   var redisSettings = self._redis_options;
   var poolSettings = self._pool_options;
 
+  // The next connection id number for tracking.
+  var nextCid = 0;
+
   // Build new Redis database clients.
   poolSettings.create = function(cb) {
     // Create a new redis client.
     var client = redis.createClient(self._redis_options);
 
+    // Assign an unique connection id to this redis client.
+    client._sol_cid = ++nextCid;
+
     // Handle client connection errors.
     client.on('error', function(err) {
-      // Emit client connection errors to connection pool users.
+      // Add the client connection id (cid) to the error data before it is emitted.
+      err["cid"] = client._sol_cid;
       self.emit('error', err);
     });
 
     // Let the application know that a pool client is attempting to reconnect.
-    client.on('reconnecting', function(delay, attempt) {
-      self.emit('reconnecting', delay, attempt);
-    })
+    client.on('reconnecting', function(info) {
+      // Add the client connection id (cid) to the reconnecting event data before it is emitted.
+      info['cid'] = client._sol_cid;
+      self.emit('reconnecting', info);
+    });
 
     cb(null, client);
   };
 
   // The destroy function is called when client connection needs to be closed.
   poolSettings.destroy = function(client) {
-    // Flush when closing.
+    var _cid = null;
+    var _err = null;
     try {
-      client.end(true);
-      self.emit('destroy', null);
+      _cid = client._sol_cid;
+      // Always flush when closing.
+      client.end(true); 
     } catch(err) {
-      self.emit('destroy', err);
+      _err = err;
+      client = null;
     }
+    self.emit('destroy', _err, _cid);
   };
 
   // Now that the pool settings are ready create a pool instance.
@@ -100,12 +113,17 @@ RedisPool.prototype.acquireDb = function(cb, db, priority) {
 // Release a database connection to the pool.
 RedisPool.prototype.release = function(client) {
   var self = this;
-  // Always reset the DB to the default. This prevents issues
-  // if a user used the select command to change the DB.
-  if (client._db_selected !== self._redis_default_db) {
-    client.select(self._redis_default_db);
+
+  if (!client.connected) {
+      this._pool.destroy(client);
+  } else {
+    // Always reset the DB to the default. This prevents issues
+    // if a user used the select command to change the DB.
+    if (client._db_selected !== self._redis_default_db) {
+      client.select(self._redis_default_db);
+    }
+    this._pool.release(client);
   }
-  this._pool.release(client);
 };
 
 // Drains the connection pool and call the callback id provided.

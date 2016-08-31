@@ -2,7 +2,6 @@ var config = require('../config.json');
 var RedisPool = require('../../index');
 
 var redisPool;
-var redisAuthPool;
 
 beforeAll(function() {
   redisPool = new RedisPool(config.redis, config.pool);
@@ -102,25 +101,31 @@ describe('waitingClientsCount', function() {
   });
 });
 
-describe('redisErrorEvent', function() {
+// Testing for errors.
+var redisPoolError;
+describe('redisErrorEvent', function(){
+
   it('should emit an error', function(done) {
-    redisPool = new RedisPool(config.badredis, config.pool); 
-    redisPool.on('error', function(err) {
-      expect(err).not.toBe(null);
-      done();
-    });
-    redisPool.acquire(function(err, conn) {
-      redisPool.release(conn);
-    });
-  });
-
-  it('should emit an error when the pool is destroyed', function(done) {
-    redisPool.on('destroy', function(err) {
-      expect(err).not.toBe(null);
-      done();
-    });
-    redisPool._pool.destroy(null);
-  });
+      redisPoolError = new RedisPool(config.badredis, config.pool); 
+      redisPoolError.on('error', function(err) {
+        expect(err).not.toBe(null);
+        expect(err.code).toBe("NR_CLOSED");
+        done();
+     });
+     redisPoolError.acquire(function(err, conn) {
+        // Send a command that should fail with AbortError.
+        conn.set('_solredis', 5);
+        redisPoolError.release(conn);
+     });
+   });
+   it('should emit an error when the pool is destroyed', function(done) {
+     redisPoolError.on('destroy', function(err, cid) {
+        expect(cid).not.toBe(null);
+        done();
+     });
+     redisPoolError.acquire(function(err, conn) {
+       redisPoolError._pool.destroy(conn);
+     });
+     
+   });
 });
-
-
