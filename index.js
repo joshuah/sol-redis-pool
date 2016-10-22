@@ -2,6 +2,10 @@ var redis = require('redis');
 var util = require('util');
 var EventEmitter = require('events').EventEmitter;
 var Pool = require('generic-pool').Pool;
+var bluebird = require('bluebird');
+
+bluebird.promisifyAll(redis.RedisClient.prototype);
+bluebird.promisifyAll(redis.Multi.prototype);
 
 var SUPPORTED_REDIS_OPTIONS = [
   'host', 'port', 'path', 'url', 'password',
