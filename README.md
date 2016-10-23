@@ -71,6 +71,7 @@ When you acquire a new client these options can be passed to the Redis client. S
 | family | IPv4 | You can force using IPv6 if you set the family to 'IPv6'. See Node.js [net](https://nodejs.org/api/net.html) or [dns](https://nodejs.org/api/dns.html) modules on how to use the family type. |
 | disable_resubscribing | false | If set to `true`, a client won't resubscribe after disconnecting. |
 | rename_commands | null | Passing an object with renamed commands to use instead of the original functions. See the [Redis security topics](http://redis.io/topics/security) for more info. |
+| tls | null | An object containing options to pass to tls.connect to set up a TLS connection to Redis (if, for example, it is set up to be accessible via a tunnel). |
 | retry_strategy | function | A function that receives an options object as parameter including the retry `attempt`, the `total_retry_time` indicating how much time passed since the last time connected, the `error` why the connection was lost and the number of `times_connected` in total. If you return a number from this function, the retry will happen exactly after that time in milliseconds. If you return a non-number, no further retry will happen and all offline commands are flushed with errors. Return an error to return that specific error to all offline commands. Example below. |
 
 ## Retry Strategy
@@ -182,6 +183,10 @@ Examples are located in the examples/ folder in the repository. These examples w
 * unix.js - shows a unix socket connection.
 
 ## History
+0.3.2 - October 23 2016
+- Added bluebird promise support for underlying redis connections in the pool. #21
+- Added the `tls` redis option. #22
+
 0.3.1 - August 31 2016
 - Prevent the `pool.release(client)` method from releasing a disconnected client back into the pool. Fixes issue #19. Some users may need to watch their pool **min** value.
 - Added connection tracking to all clients int the pool. You may access the value using the `client._sol_cid` property. This value is passed to the `destroy`, `reconnecting`, and `error` events as well. This should help users with their application logging.

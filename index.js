@@ -12,7 +12,7 @@ var SUPPORTED_REDIS_OPTIONS = [
   'string_numbers', 'return_buffers', 'detect_buffers', 
   'socket_keepalive', 'no_ready_check', 'enable_offline_queue',
   'retry_unfulfilled_commands', 'family', 'disable_resubscribing',
-  'rename_commands', 'auth_pass', 'db', 'retry_strategy'
+  'rename_commands', 'auth_pass', 'db', 'retry_strategy', 'tls'
 ];
 
 var SUPPORTED_POOL_OPTIONS = [
