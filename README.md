@@ -1,4 +1,4 @@
-==============
+
 sol-redis-pool
 ==============
 
@@ -72,6 +72,7 @@ When you acquire a new client these options can be passed to the Redis client. S
 | disable_resubscribing | false | If set to `true`, a client won't resubscribe after disconnecting. |
 | rename_commands | null | Passing an object with renamed commands to use instead of the original functions. See the [Redis security topics](http://redis.io/topics/security) for more info. |
 | tls | null | An object containing options to pass to tls.connect to set up a TLS connection to Redis (if, for example, it is set up to be accessible via a tunnel). |
+| prefix | null | A string used to prefix all used keys (e.g. namespace:test). Please be aware that the keys command will not be prefixed. The keys command has a "pattern" as argument and no key and it would be impossible to determine the existing keys in Redis if this would be prefixed. |
 | retry_strategy | function | A function that receives an options object as parameter including the retry `attempt`, the `total_retry_time` indicating how much time passed since the last time connected, the `error` why the connection was lost and the number of `times_connected` in total. If you return a number from this function, the retry will happen exactly after that time in milliseconds. If you return a non-number, no further retry will happen and all offline commands are flushed with errors. Return an error to return that specific error to all offline commands. Example below. |
 
 ## Retry Strategy
@@ -183,6 +184,9 @@ Examples are located in the examples/ folder in the repository. These examples w
 * unix.js - shows a unix socket connection.
 
 ## History
+0.3.3 - April 28 2017
+- Added `prefix` option. #25
+
 0.3.2 - October 23 2016
 - Added bluebird promise support for underlying redis connections in the pool. #21
 - Added the `tls` redis option. #22
