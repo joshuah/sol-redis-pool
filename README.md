@@ -2,6 +2,8 @@
 DEPRECATED sol-redis-pool
 ==============
 
+[![No Maintenance Intended](http://unmaintained.tech/badge.svg)](http://unmaintained.tech/)
+
 A simple Redis pool for node using generic-pool.
 
 ### Install
